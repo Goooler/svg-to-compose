@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.0.0"
     id("com.github.gmazzo.buildconfig") version "5.4.0"
+    id("io.github.goooler.shadow") version "8.1.8"
     id("maven-publish")
 }
 
@@ -56,16 +57,8 @@ tasks.withType<Jar>().configureEach {
     }
 }
 
-val fatJar by tasks.registering(Jar::class) {
-    dependsOn(configurations.runtimeClasspath)
+tasks.shadowJar {
     dependsOn(tasks.jar)
-
-    from(sourceSets.main.map { it.output.classesDirs + it.output.resourcesDir })
-    from(configurations.runtimeClasspath.map { it.asFileTree.files.map(::zipTree) })
-
-    archiveClassifier = "fat"
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     exclude(
         "**/*.kotlin_metadata",
@@ -80,27 +73,22 @@ val fatJar by tasks.registering(Jar::class) {
         "META-INF/LGPL2.1",
         "META-INF/maven/**",
         "META-INF/native-image/**",
-        "META-INF/proguard/**",
         "META-INF/*.version",
-        "META-INF/*.SF",
-        "META-INF/*.DSA",
-        "META-INF/*.RSA",
         "**/*.proto",
         "**/*.dex",
         "**/LICENSE**",
         "**/NOTICE**",
         "r8-version.properties",
         "migrateToAndroidx/*",
-        "xsd/catalog.xml",
     )
 }
 
 val r8File = layout.buildDirectory.file("libs/$baseName-$version-r8.jar").map { it.asFile }
 val rulesFile = project.file("src/main/proguard-rules.pro")
 val r8Jar by tasks.registering(JavaExec::class) {
-    dependsOn(fatJar)
+    dependsOn(tasks.shadowJar)
 
-    val fatJarFile = fatJar.get().archiveFile
+    val fatJarFile = tasks.shadowJar.get().archiveFile
     inputs.file(fatJarFile)
     inputs.file(rulesFile)
     outputs.file(r8File)
