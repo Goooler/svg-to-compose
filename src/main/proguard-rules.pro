@@ -10,3 +10,6 @@
 -dontwarn org.graalvm.nativeimage.**
 -dontwarn org.graalvm.word.**
 -dontwarn com.oracle.svm.core.annotate.**
+
+# TODO: it should be possible to keep less classes under this package.
+-keep class org.xmlpull.**
